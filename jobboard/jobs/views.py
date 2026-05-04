@@ -6,6 +6,9 @@ from rest_framework.response import Response
 from .models import Job, Company, Application
 from .serializers import JobSerializer, CompanySerializer, ApplicationSerializer
 
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from .filters import JobFilter
 
 class CompanyViewSet(viewsets.ModelViewSet):
     """
@@ -22,7 +25,13 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
 class JobViewSet(viewsets.ModelViewSet):
     queryset = Job.objects.all()
-    serializer_class = JobSerializer        # default
+    serializer_class = JobSerializer
+    filterset_class = JobFilter
+
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['title', 'description', 'company__name']
+    ordering_fields = ['posted_at', 'salary_min', 'salary_max']
+    ordering = ['-posted_at']    # default ordering    
 
     def get_serializer_class(self):
         if self.action == 'apply':
