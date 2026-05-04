@@ -20,4 +20,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('jobs.urls')),   # changed to /api/
+    path('api-auth/', include('rest_framework.urls')),  # ← adds login/logout to browser
+
 ]

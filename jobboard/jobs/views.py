@@ -6,9 +6,77 @@ from rest_framework.response import Response
 from .models import Job, Company, Application
 from .serializers import JobSerializer, CompanySerializer, ApplicationSerializer
 
+# filtering
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from .filters import JobFilter
+
+# token authentication
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+
+@api_view(['POST'])
+@permission_classes([AllowAny])     # override default - no auth needed here
+def register(request):
+    """POST /api/auth/register/"""
+    from django.contrib.auth.models import User
+
+    username = request.data.get('username')
+    password = request.data.get('password')
+    email = request.data.get('email', '')
+
+    if not username or not password:
+        return Response(
+            {'error': 'Username and password required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    if User.objects.filter(username=username).exists():
+        return Response(
+            {'error': 'Username already taken'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = User.objects.create_user(
+        username=username,
+        password=password,
+        email=email
+    )
+    token, created = Token.objects.get_or_create(user=user)
+
+    return Response({
+        'token': token.key,
+        'user_id': user.id,
+        'username': user.username,
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login(request):
+    """POST /api/auth/login/"""
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    user = authenticate(username=username, password=password)
+
+    if not user:
+        return Response(
+            {'error': 'Invalid credentials'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    token, created = Token.objects.get_or_create(user=user)
+    return Response({'token': token.key, 'user_id': user.id})
+
+
+@api_view(['POST'])
+def logout(request):
+    """POST /api/auth/logout/ — requires token"""
+    request.user.auth_token.delete()
+    return Response({'message': 'Logged out successfully'})
 
 class CompanyViewSet(viewsets.ModelViewSet):
     """

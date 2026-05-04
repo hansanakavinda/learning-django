@@ -32,8 +32,23 @@ class Command(BaseCommand):
             default=50,
             help='Number of applications to create'
         )
+        # add this inside add_arguments
+        parser.add_argument(
+            '--clear',
+            action='store_true',
+            help='Clear existing data before seeding'
+        )
 
     def handle(self, *args, **kwargs):
+
+        # add this at the top of handle(), before the create calls
+        if kwargs['clear']:
+            self.stdout.write('Clearing existing data...')
+            Application.objects.all().delete()
+            Job.objects.all().delete()
+            Company.objects.all().delete()
+            self.stdout.write(self.style.WARNING('Data cleared.'))
+            
         companies_count = kwargs['companies']
         jobs_count = kwargs['jobs']
         applications_count = kwargs['applications']

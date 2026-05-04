@@ -9,4 +9,7 @@ router.register(r'applications', views.ApplicationViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('auth/register/', views.register),
+    path('auth/login/', views.login),
+    path('auth/logout/', views.logout),
 ]
