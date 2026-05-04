@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Company(models.Model):
     name = models.CharField(max_length=200)
@@ -20,6 +21,13 @@ class Job(models.Model):
         ('remote', 'Remote'),
     ]
 
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='jobs',
+        null=True,              # null=True because existing jobs have no creator
+        blank=True
+    )
     company = models.ForeignKey(
         Company,
         on_delete=models.CASCADE,    # if company deleted, delete its jobs too

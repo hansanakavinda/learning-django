@@ -29,8 +29,10 @@ class JobSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'job_type',
             'job_type_display', 'salary_min', 'salary_max',
             'is_active', 'posted_at', 'company', 'company_name',
-            'company_location', 'application_count'
+            'company_location', 'application_count', 'created_by'
         ]
+        read_only_fields = ['created_by', 'posted_at']
+
 
     def get_application_count(self, obj):
         # Custom field - call a method to compute it
