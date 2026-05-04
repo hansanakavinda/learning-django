@@ -1,13 +1,12 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
 
-urlpatterns = [
-    path('', views.job_list, name='job-list'),
-    path('<int:pk>/', views.job_detail, name='job-detail'),
-    path('<int:pk>/apply/', views.apply_to_job, name='job-apply'),
-    path('companies/', views.company_list, name='company-list'),
-]
+router = DefaultRouter()
+router.register(r'companies', views.CompanyViewSet)
+router.register(r'jobs', views.JobViewSet, basename='job')
+router.register(r'applications', views.ApplicationViewSet)
 
-# <int:pk> is a URL parameter
-# /jobs/1/ → pk=1 will be passed to the view
-# /jobs/42/ → pk=42 will be passed to the view
+urlpatterns = [
+    path('', include(router.urls)),
+]

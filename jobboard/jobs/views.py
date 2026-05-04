@@ -1,53 +1,60 @@
 from django.shortcuts import render
 
-from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Job, Company, Application
 from .serializers import JobSerializer, CompanySerializer, ApplicationSerializer
 
 
-@api_view(['GET'])               # only allow GET requests
-def job_list(request):
-    jobs = Job.objects.filter(is_active=True)
-    serializer = JobSerializer(jobs, many=True)    # many=True for lists
-    return Response(serializer.data)
+class CompanyViewSet(viewsets.ModelViewSet):
+    """
+    ModelViewSet gives you ALL of these for free:
+    GET    /companies/       → list()
+    POST   /companies/       → create()
+    GET    /companies/{id}/  → retrieve()
+    PUT    /companies/{id}/  → update()
+    PATCH  /companies/{id}/  → partial_update()
+    DELETE /companies/{id}/  → destroy()
+    """
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
 
+class JobViewSet(viewsets.ModelViewSet):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer        # default
 
-@api_view(['GET'])
-def job_detail(request, pk):
-    try:
-        job = Job.objects.get(pk=pk)
-    except Job.DoesNotExist:
-        return Response(
-            {'error': 'Job not found'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+    def get_serializer_class(self):
+        if self.action == 'apply':
+            return ApplicationSerializer
+        if self.action == 'applications':
+            return ApplicationSerializer
+        return JobSerializer
 
-    serializer = JobSerializer(job)        # single object, no many=True
-    return Response(serializer.data)
+    def get_queryset(self):
+        queryset = Job.objects.all()
+        job_type = self.request.query_params.get('job_type')
+        if job_type:
+            queryset = queryset.filter(job_type=job_type)
+        return queryset.filter(is_active=True)
 
+    @action(detail=True, methods=['post'])
+    def apply(self, request, pk=None):
+        job = self.get_object()
+        serializer = self.get_serializer(data=request.data)
 
-@api_view(['POST'])              # only allow POST requests
-def apply_to_job(request, pk):
-    try:
-        job = Job.objects.get(pk=pk)
-    except Job.DoesNotExist:
-        return Response({'error': 'Job not found'}, status=404)
+        if serializer.is_valid():
+            serializer.save(job=job)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    # DRF handles validation for you!
-    serializer = ApplicationSerializer(data=request.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    if serializer.is_valid():
-        serializer.save(job=job)     # pass job automatically
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    # If invalid, serializer.errors tells you exactly what's wrong
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET'])
-def company_list(request):
-    companies = Company.objects.all()
-    serializer = CompanySerializer(companies, many=True)
-    return Response(serializer.data)
+    @action(detail=True, methods=['get'])
+    def applications(self, request, pk=None):
+        job = self.get_object()
+        apps = job.applications.all()
+        serializer = self.get_serializer(apps, many=True)
+        return Response(serializer.data)
+class ApplicationViewSet(viewsets.ModelViewSet):
+    queryset = Application.objects.all()
+    serializer_class = ApplicationSerializer
