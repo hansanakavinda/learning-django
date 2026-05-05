@@ -2,8 +2,10 @@
 
 ### create project
 
+. after the "project name" tells django to use the current directory as the project root or else it creates one
+
 ```
-django-admin startproject <project_name>
+django-admin startproject <project_name> .
 cd <project_name>
 ```
 
@@ -17,8 +19,10 @@ then add the project name to the settings.py to the INSTALLED_APPS list
 
 ### run development server
 
+can pass a port number which is optional
+
 ```
-python manage.py runserver
+python manage.py runserver <port>
 ```
 
 ### make model changes

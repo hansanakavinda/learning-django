@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django_filters",
     "rest_framework.authtoken",
     "jobs",
+    # "home", # ← we don't need to add this because it doesn't have any models yet
 ]
 
 REST_FRAMEWORK = {
