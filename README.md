@@ -27,15 +27,15 @@ python manage.py runserver <port>
 
 ### make model changes
 
-- makemigrates 
+- makemigrates & migrate
     - can pass "app_name" as optional parameter
 
 - migrate
-    - can pass --database=dbname when working with multiple databases
+    - can pass --database="dbname" when working with multiple databases
 
 ```
 python manage.py makemigrations <app_name>
-python manage.py migrate
+python manage.py migrate <app_name> --database=<dbname>
 ```
 
 ### create admin user

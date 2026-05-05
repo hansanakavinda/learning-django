@@ -77,3 +77,72 @@ class NeonRouter:
         if app_label in self.route_app_labels:
             return db == 'neon'
         return None
+    
+
+class AnalyticsRouter:
+    """
+    Model-level routing for the analytics app.
+    Report       → SQLite (default)
+    MetricLog    → Neon PostgreSQL
+    """
+
+    # Map each model to its database
+    model_database_map = {
+        'report': 'default',        # model_name is always lowercase
+        'metriclog': 'neon',
+    }
+
+    def _get_db(self, model):
+        """
+        Helper method.
+        Checks if the model belongs to analytics app,
+        then looks up which database it should use.
+        """
+        if model._meta.app_label == 'analytics':
+            return self.model_database_map.get(model._meta.model_name)
+            #                                        ↑
+            #                          'report' or 'metriclog'
+            #                          always lowercase version
+            #                          of the class name
+        return None
+
+    def db_for_read(self, model, **hints):
+        return self._get_db(model)
+
+    def db_for_write(self, model, **hints):
+        return self._get_db(model)
+
+    def allow_relation(self, obj1, obj2, **hints):
+        """
+        Only allow relations between models
+        that live in the same database.
+        """
+        if (
+            obj1._meta.app_label == 'analytics' and
+            obj2._meta.app_label == 'analytics'
+        ):
+            db1 = self.model_database_map.get(obj1._meta.model_name)
+            db2 = self.model_database_map.get(obj2._meta.model_name)
+
+            # Only allow relation if both are in same database
+            return db1 == db2
+
+        return None
+
+    def allow_migrate(self, db, app_label, model_name=None, **hints):
+        """
+        Control which database each model's table gets created in.
+        """
+        if app_label == 'analytics':
+            if model_name is None:
+                # If no specific model, allow both databases
+                return True
+
+            target_db = self.model_database_map.get(model_name)
+            return db == target_db
+            #     ↑         ↑
+            #  database    database this model
+            #  being       should live in
+            #  migrated
+
+        return None

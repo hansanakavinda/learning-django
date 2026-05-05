@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "jobs",
     "home",
+    "analytics",
 ]
 
 REST_FRAMEWORK = {
@@ -121,11 +122,11 @@ DATABASES = {
     }
 }
 
-# settings.py
 
 DATABASE_ROUTERS = [
-    'jobboard.routers.NeonRouter',
     'jobboard.routers.JobsRouter',
+    'jobboard.routers.NeonRouter',
+    'jobboard.routers.AnalyticsRouter',     # ← new
 ]
 
 # Password validation
